@@ -95,9 +95,12 @@ int main(int argc, char* args[]){
         return 3;
     }
 
-//    Mix_OpenAudio(44100, MIX_INIT_MP3, 1, 1024);
-//    music = Mix_LoadMUS("Great Fairy.mp3");
+//    if(Mix_OpenAudio(44100, AUDIO_S16SYS, 1, 2048)==-1)
+//        return 4;
+//
+//    music = Mix_LoadMUS("great_fairy.mp3");
 //    Mix_PlayMusic(music, -1);
+
     int w=0, h=0;
     initComponents();
     texts["menu.png"] = IMG_LoadTexture(renderer, "menu.png");
