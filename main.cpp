@@ -131,7 +131,7 @@ void setNumMap(int num){
 
 void setRecord(int w, int h){
     getRecord();
-    font = TTF_OpenFont("bin/Release/DataSeventy.ttf", 14);
+    font = TTF_OpenFont("bin/Release/DataSeventy.ttf", 25);
     sst << "Record: " << score;
     surfRecord = TTF_RenderText_Solid(font, sst.str().c_str(), textcolor);
     sst.str(string());
@@ -159,6 +159,8 @@ int main(int argc, char* args[]){
     SDL_Init(SDL_INIT_AUDIO);
     if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 1, 2048)==-1)
         return 4;
+
+    TTF_Init();
 
     music = Mix_LoadMUS("great_fairy.mp3");
     Mix_PlayMusic(music, -1);
@@ -228,7 +230,6 @@ int main(int argc, char* args[]){
                     case 1:
                         if(mouseX>75 && mouseX<525 && mouseY>250 && mouseY<400){
                             setRecord(w, h);
-                            cout << "SCORE: " << score << endl;
                             state = 2;
                         }
                         break;
@@ -274,7 +275,6 @@ int main(int argc, char* args[]){
                         if(mouseX>100 && mouseX<500 && mouseY>335 && mouseY<445){
                             randomOrder();
                             setRecord(w, h);
-                            cout << "SCORE: " << score << endl;
                         }
                 }
             }
