@@ -3,24 +3,31 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include <iostream>
+#include <fstream>
 #include <sstream>
+#include <string>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
+#include <SDL_ttf.h>
 
 using namespace std;
 
 bool resetorder = true;
 stringstream sst;
-int mouseX, mouseY, clicks = 1, state = 1;
+string path = "bin/release/";
+int mouseX, mouseY, clicks = 1, state = 1, score = 0;
 int numeros[3][3];
 SDL_Window * window;
 SDL_Renderer * renderer;
 SDL_Event event;
 SDL_Texture *num1, *num2, *num3, *num4, *num5, *num6, *num7, *num8, *num0, *menu, *play, *again, *reset, *GO, *backg;
-SDL_Rect rn1, rn2, rn3, rn4, rn5, rn6, rn7, rn8, rn0, rmenu, rplay, ragain, rreset, rGO, rbackg;
-Mix_Music * music;
+SDL_Texture *record;
+SDL_Rect rn1, rn2, rn3, rn4, rn5, rn6, rn7, rn8, rn0, rmenu, rplay, ragain, rreset, rGO, rbackg, rrecord;
+SDL_Surface *surfRecord;
+SDL_Color textcolor = {255, 255, 255};
+TTF_Font *font;
+Mix_Music * music = NULL;
 vector<SDL_Texture*> textures;
 vector<SDL_Rect> rect;
 map<string,SDL_Texture*> texts;
@@ -58,6 +65,29 @@ void randomOrder(){
     cout << endl << endl;
 }
 
+void getRecord(){
+    ifstream in("record");
+    in.read((char*)&score, 4);
+    in.close();
+}
+
+void writeRecord(){
+    getRecord();
+
+    if(score == 0){
+        ofstream out("record");
+        out.write((char*)&clicks, 4);
+        out.close();
+        return;
+    }
+
+    if(clicks<score){
+        ofstream out("record");
+        out.write((char*)&clicks, 4);
+        out.close();
+    }
+}
+
 void verifyWin(){
     int cont = 1;
     for(int x = 0; x<3; x++){
@@ -70,14 +100,45 @@ void verifyWin(){
                 cont = 0;
         }
     }
-    if(cont==10)
+    if(cont==10){
         state = 3;
+        writeRecord();
+    }
 }
 
 void setTexture(string img, SDL_Texture*(&text), SDL_Rect& rect, int w, int h, int x, int y){
     text = texts[img];
     SDL_QueryTexture(text, NULL, NULL, &w, &h);
     rect.x = x; rect.y = y; rect.w = w; rect.h = h;
+}
+
+void setMap(string str){
+    sst << path << str;
+    string p = sst.str();
+    texts[str] = IMG_LoadTexture(renderer, p.c_str());
+    sst.str(string());
+}
+
+void setNumMap(int num){
+    sst << num << ".png";
+    string n = sst.str();
+    sst.str(string());
+    sst << path << n;
+    string p = sst.str();
+    texts[n] = IMG_LoadTexture(renderer, p.c_str());
+    sst.str(string());
+}
+
+void setRecord(int w, int h){
+    getRecord();
+    font = TTF_OpenFont("bin/Release/DataSeventy.ttf", 14);
+    sst << "Record: " << score;
+    surfRecord = TTF_RenderText_Solid(font, sst.str().c_str(), textcolor);
+    sst.str(string());
+    record = SDL_CreateTextureFromSurface(renderer, surfRecord);
+    SDL_QueryTexture(record, NULL, NULL, &w, &h);
+    rrecord.x = 460; rrecord.y = 150; rrecord.w = w; rrecord.h = h;
+    SDL_FreeSurface(surfRecord);
 }
 
 int main(int argc, char* args[]){
@@ -95,32 +156,36 @@ int main(int argc, char* args[]){
         return 3;
     }
 
-//    if(Mix_OpenAudio(44100, AUDIO_S16SYS, 1, 2048)==-1)
-//        return 4;
-//
-//    music = Mix_LoadMUS("great_fairy.mp3");
-//    Mix_PlayMusic(music, -1);
+    SDL_Init(SDL_INIT_AUDIO);
+    if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 1, 2048)==-1)
+        return 4;
+
+    music = Mix_LoadMUS("great_fairy.mp3");
+    Mix_PlayMusic(music, -1);
 
     int w=0, h=0;
     initComponents();
-    texts["menu.png"] = IMG_LoadTexture(renderer, "menu.png");
-    texts["play.png"] = IMG_LoadTexture(renderer, "play.png");
-    texts["gameover.png"] = IMG_LoadTexture(renderer, "gameover.png");
-    texts["playagain.png"] = IMG_LoadTexture(renderer, "playagain.png");
-    texts["background.png"] = IMG_LoadTexture(renderer, "background.png");
-    texts["reset.png"] = IMG_LoadTexture(renderer, "reset.png");
 
-    for(int x = 0; x<9; x++){
-        sst << x << ".png";
-        texts[sst.str()] = IMG_LoadTexture(renderer, sst.str().c_str());
-        sst.str(string());
-    }
+    setMap("menu.png");
+    setMap("play.png");
+    setMap("gameover.png");
+    setMap("playagain.png");
+    setMap("background.png");
+    setMap("reset.png");
+
+    setTexture("menu.png", menu, rmenu, w, h, 0, 0);
+    setTexture("play.png", play, rplay, w, h, 75, 250);
+    setTexture("background.png", backg, rbackg, w, h, 0, 0);
+    setTexture("reset.png", reset, rreset, w, h, 460, 175);
+    setTexture("gameover.png", GO, rGO, w, h, 0, 0);
+    setTexture("playagain.png", again, ragain, w, h, 100, 335);
+
+    for(int x = 0; x<9; x++)
+        setNumMap(x);
 
     while(true){
         switch(state){
             case 1:
-                setTexture("menu.png", menu, rmenu, w, h, 0, 0);
-                setTexture("play.png", play, rplay, w, h, 75, 250);
                 SDL_RenderCopy(renderer, menu, NULL, &rmenu);
                 SDL_RenderCopy(renderer, play, NULL, &rplay);
                 break;
@@ -128,12 +193,11 @@ int main(int argc, char* args[]){
             case 2:
                 if(resetorder)
                     randomOrder();
-
                 resetorder = false;
-                setTexture("background.png", backg, rbackg, w, h, 0, 0);
-                setTexture("reset.png", reset, rreset, w, h, 460, 175);
+
                 SDL_RenderCopy(renderer, backg, NULL, &rbackg);
                 SDL_RenderCopy(renderer, reset, NULL, &rreset);
+                SDL_RenderCopy(renderer, record, NULL, &rrecord);
                 for(int x = 0; x<3; x++){
                     for(int y = 0; y<3; y++){
                         int pos = numeros[x][y];
@@ -146,8 +210,6 @@ int main(int argc, char* args[]){
                 break;
 
             case 3:
-                setTexture("gameover.png", GO, rGO, w, h, 0, 0);
-                setTexture("playagain.png", again, ragain, w, h, 100, 335);
                 SDL_RenderCopy(renderer, GO, NULL, &rGO);
                 SDL_RenderCopy(renderer, again, NULL, &ragain);
                 break;
@@ -164,8 +226,11 @@ int main(int argc, char* args[]){
 
                 switch(state){
                     case 1:
-                        if(mouseX>75 && mouseX<525 && mouseY>250 && mouseY<400)
+                        if(mouseX>75 && mouseX<525 && mouseY>250 && mouseY<400){
+                            setRecord(w, h);
+                            cout << "SCORE: " << score << endl;
                             state = 2;
+                        }
                         break;
 
                     case 2:
@@ -206,8 +271,11 @@ int main(int argc, char* args[]){
                         break;
 
                     case 3:
-                        if(mouseX>100 && mouseX<500 && mouseY>335 && mouseY<445)
+                        if(mouseX>100 && mouseX<500 && mouseY>335 && mouseY<445){
                             randomOrder();
+                            setRecord(w, h);
+                            cout << "SCORE: " << score << endl;
+                        }
                 }
             }
             verifyWin();

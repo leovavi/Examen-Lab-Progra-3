@@ -1,13 +1,15 @@
 # depslib dependency file v1.0
-1479476856 source:c:\users\leovavi\documents\unitec\2 año\ii trimestre\lab. programación iii\puzzle\main.cpp
+1480103381 source:c:\users\leovavi\documents\unitec\2 año\ii trimestre\lab. programación iii\puzzle\main.cpp
 	<ctime>
 	<cstdlib>
 	<iostream>
 	<vector>
 	<map>
-	<iostream>
+	<fstream>
 	<sstream>
+	<string>
 	<SDL.h>
 	<SDL_image.h>
 	<SDL_mixer.h>
+	<SDL_ttf.h>
 
