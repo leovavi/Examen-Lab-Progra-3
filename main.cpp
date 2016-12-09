@@ -16,18 +16,19 @@ using namespace std;
 bool resetorder = true;
 stringstream sst;
 string path = "bin/release/";
-int mouseX, mouseY, clicks = 1, state = 1, score = 0;
+int mouseX, mouseY, clicks = 0, state = 1, score = 0;
 int numeros[3][3];
 SDL_Window * window;
 SDL_Renderer * renderer;
 SDL_Event event;
 SDL_Texture *num1, *num2, *num3, *num4, *num5, *num6, *num7, *num8, *num0, *menu, *play, *again, *reset, *GO, *backg;
-SDL_Texture *record;
-SDL_Rect rn1, rn2, rn3, rn4, rn5, rn6, rn7, rn8, rn0, rmenu, rplay, ragain, rreset, rGO, rbackg, rrecord;
-SDL_Surface *surfRecord;
+SDL_Texture *record, *textClicks;
+SDL_Rect rn1, rn2, rn3, rn4, rn5, rn6, rn7, rn8, rn0, rmenu, rplay, ragain, rreset, rGO, rbackg, rrecord, rclicks;
+SDL_Surface *surfRecord, *surfClicks;
 SDL_Color textcolor = {255, 255, 255};
 TTF_Font *font;
 Mix_Music * music = NULL;
+Mix_Chunk * click = NULL;
 vector<SDL_Texture*> textures;
 vector<SDL_Rect> rect;
 map<string,SDL_Texture*> texts;
@@ -61,8 +62,7 @@ void randomOrder(){
         }
         numeros[randY][randX] = x;
     }
-    clicks = 1;
-    cout << endl << endl;
+    clicks = 0;
 }
 
 void getRecord(){
@@ -141,6 +141,17 @@ void setRecord(int w, int h){
     SDL_FreeSurface(surfRecord);
 }
 
+void setSurfClicks(int w, int h){
+    font = TTF_OpenFont("bin/Release/DataSeventy.ttf", 25);
+    sst << "Clicks: " << clicks;
+    surfClicks = TTF_RenderText_Solid(font, sst.str().c_str(), textcolor);
+    sst.str(string());
+    textClicks = SDL_CreateTextureFromSurface(renderer, surfClicks);
+    SDL_QueryTexture(textClicks, NULL, NULL, &w, &h);
+    rclicks.x = 460; rclicks.y = 300; rclicks.w = w; rclicks.h = h;
+    SDL_FreeSurface(surfClicks);
+}
+
 int main(int argc, char* args[]){
     if(SDL_Init(SDL_INIT_EVERYTHING)<0)
         return 1;
@@ -163,6 +174,8 @@ int main(int argc, char* args[]){
     TTF_Init();
 
     music = Mix_LoadMUS("great_fairy.mp3");
+    click = Mix_LoadWAV("click4.ogg");
+
     Mix_PlayMusic(music, -1);
 
     int w=0, h=0;
@@ -200,6 +213,8 @@ int main(int argc, char* args[]){
                 SDL_RenderCopy(renderer, backg, NULL, &rbackg);
                 SDL_RenderCopy(renderer, reset, NULL, &rreset);
                 SDL_RenderCopy(renderer, record, NULL, &rrecord);
+                SDL_RenderCopy(renderer, textClicks, NULL, &rclicks);
+
                 for(int x = 0; x<3; x++){
                     for(int y = 0; y<3; y++){
                         int pos = numeros[x][y];
@@ -239,7 +254,6 @@ int main(int argc, char* args[]){
                             if(mouseX>460 && mouseX<590 && mouseY>175 && mouseY<275)
                                 resetorder = true;
 
-                        cout << "Clicks: " << clicks << endl;
                         for(int x = 0; x<3; x++){
                             for(int y = 0; y<3; y++){
                                 if(mouseX>y*150 && mouseX<(y*150)+150 && mouseY>x*150 && mouseY<(x*150)+150){
@@ -247,24 +261,32 @@ int main(int argc, char* args[]){
                                         numeros[y+1][x] = numeros[y][x];
                                         numeros[y][x] = 0;
                                         clicks++;
+                                        setSurfClicks(w, h);
+                                        Mix_PlayChannel(-1, click, 0);
                                     }
 
                                     else if(y-1>=0 && numeros[y-1][x]==0){
                                         numeros[y-1][x] = numeros[y][x];
                                         numeros[y][x] = 0;
                                         clicks++;
+                                        setSurfClicks(w, h);
+                                        Mix_PlayChannel(-1, click, 0);
                                     }
 
                                     else if(x+1<3 && numeros[y][x+1]==0){
                                         numeros[y][x+1] = numeros[y][x];
                                         numeros[y][x] = 0;
                                         clicks++;
+                                        setSurfClicks(w, h);
+                                        Mix_PlayChannel(-1, click, 0);
                                     }
 
                                     else if(x-1>=0 && numeros[y][x-1]==0){
                                         numeros[y][x-1] = numeros[y][x];
                                         numeros[y][x] = 0;
                                         clicks++;
+                                        setSurfClicks(w, h);
+                                        Mix_PlayChannel(-1, click, 0);
                                     }
                                 }
                             }
